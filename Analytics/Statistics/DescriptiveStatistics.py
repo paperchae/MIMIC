@@ -48,10 +48,14 @@ class Dispersion:
 class Distribution:
     def __init__(self, data):
         self.data = data
+
+    def skewness(self):
         #  if normal distribution, skewness = 0 / negative: left tail / positive: right tail
-        self.skewness = stats.skew(self.data)
+        return stats.skew(self.data)
+
+    def kurtosis(self):
         #  if normal distribution, kurtosis = 0 / negative: flat / positive: sharp
-        self.kurtosis = stats.kurtosis(self.data)
+        return stats.kurtosis(self.data)
 
     def standard_normal_distribution(self):
         mean = np.mean(self.data)
@@ -65,9 +69,9 @@ class Distribution:
         normal = np.random.normal(CentralTendency(self.data).mean(), Dispersion(self.data).std(), len(self.data))
         plt.hist(normal, bins=100, density=True, alpha=0.5, label='normal')
         plt.hist(self.data, bins=100, density=True, alpha=0.5, label='data')
-        iqr = Outlier(self.data).iqr_test()
-        std = Outlier(self.data).std_test()
-        plt.hist(self.data[iqr]/len(self.data), bins=100, density=True, alpha=0.5, label='iqr')
+        # iqr = Outlier(self.data).iqr_test()
+        # std = Outlier(self.data).std_test()
+        # plt.hist(self.data[iqr] / len(self.data), bins=100, density=True, alpha=0.5, label='iqr')
         # plt.hist(self.data[std], bins=100, density=True, alpha=0.5, label='std')
         plt.legend(loc='upper right')
         plt.show()
