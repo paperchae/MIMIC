@@ -40,6 +40,7 @@ class Normality:
     def qq_plot(self):
         pass
 
+
 def confidence_interval(data, confidence_level=0.95):
     """
     Calculate confidence interval of sampled data

@@ -65,10 +65,18 @@ class Distribution:
         else:
             return False
 
-    def plot(self):
-        normal = np.random.normal(CentralTendency(self.data).mean(), Dispersion(self.data).std(), len(self.data))
-        plt.hist(normal, bins=100, density=True, alpha=0.5, label='normal')
+    def hist(self, plot_normal=True):
+        if plot_normal:
+            normal = np.round(np.random.normal(CentralTendency(self.data).mean(), Dispersion(self.data).std(), len(self.data)))
+            plt.hist(normal, bins=100, density=True, alpha=0.5, label='normal')
         plt.hist(self.data, bins=100, density=True, alpha=0.5, label='data')
+        dispersion = Dispersion(self.data)
+        distribution = Distribution(self.data)
+        plt.axvline(dispersion.q1(), color='r', linestyle='dashed', linewidth=1)
+        plt.axvline(dispersion.q3(), color='r', linestyle='dashed', linewidth=1)
+
+        # plt.axvline(dispersion.q1() - 1.5 * dispersion.iqr(), color='r', linestyle='dashed', linewidth=1)
+        # plt.axvline(dispersion.q3() + 1.5 * dispersion.iqr(), color='r', linestyle='dashed', linewidth=1)
         # iqr = Outlier(self.data).iqr_test()
         # std = Outlier(self.data).std_test()
         # plt.hist(self.data[iqr] / len(self.data), bins=100, density=True, alpha=0.5, label='iqr')
@@ -77,27 +85,28 @@ class Distribution:
         plt.show()
 
 
+
 class Outlier:
     def __init__(self, data):
-        self.data = np.round(data)
+        self.data = np.round(data[np.isfinite(data)])
 
     def iqr_test(self):
         iqr = Dispersion(self.data).iqr()
         lower_threshold = Dispersion(self.data).q1() - 1.5 * iqr
         upper_threshold = Dispersion(self.data).q3() + 1.5 * iqr
-        return np.where((self.data < lower_threshold) | (self.data > upper_threshold))
+        return np.where((self.data < lower_threshold) | (self.data > upper_threshold))[0]
 
     def std_test(self):
         std = Dispersion(self.data).std()
         mean = CentralTendency(self.data).mean()
-        return np.where((self.data < mean - 3 * std) | (self.data > mean + 3 * std))
+        return np.where((self.data < mean - 3 * std) | (self.data > mean + 3 * std))[0]
+
+    def get_mahalanobis_dis(self, dist=None):
+        """
+        to check mahalanobis distance of detected peaks intervals and values
+        """
+        maha_dis = np.abs(self.data - CentralTendency(self.data).mean()) / Dispersion(self.data).std()
+        return np.where(maha_dis > dist)[0]
 
 
-if __name__ == "__main__":
-    test = np.random.randn(1990) * 20 + 80
 
-    out_test = Outlier(test).iqr_test()
-    print(out_test)
-    std_test = Outlier(test).std_test()
-    print(std_test)
-    Distribution(test).plot()
