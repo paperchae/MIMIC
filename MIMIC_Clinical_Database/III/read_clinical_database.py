@@ -186,5 +186,5 @@ def read_patients(subject_list, debug=False):
 
 if __name__ == "__main__":
     debug_mode = True
-    pid = pd.read_csv('./pid.csv', header=0, sep=',').to_numpy(dtype=int)[:, -1]
+    pid = pd.read_csv('result/pid.csv', header=0, sep=',').to_numpy(dtype=int)[:, -1]
     patients_df = read_patients(pid, debug_mode)

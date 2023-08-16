@@ -2,10 +2,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import statistics as st
-
-import numpy as np
 from scipy import stats
-import matplotlib.pyplot as plt
 
 
 class Normality:
