@@ -61,13 +61,19 @@ class Cleansing:
 
     def dc_removal(self):
         """
-        This function removes the dc value from the signals
+        Removes the dc value from the signals
         :return: dc removed signals
         """
         return self.signals - torch.mean(self.signals, dim=-1, keepdim=True)
 
 
 class Manipulation:
+    """
+    Signal Manipulation class
+    Supports to_chunks, down-Sample, normalize
+    signals: torch.tensor(n, length)
+    """
+
     def __init__(self, signals):
         self.signals = signals
         self.is_tensor = True if type(signals) == torch.Tensor else False
@@ -90,7 +96,7 @@ class Manipulation:
 
     def down_sample(self, from_fs: int = None, to_fs: int = None):
         """
-        Down sample signals from from_fs to to_fs
+        Down-sample signals from from_fs to to_fs
         :param from_fs: int, original sampling frequency
         :param to_fs: int, target sampling frequency
         :return: down sampled signals in shape (n, -1)
@@ -121,19 +127,30 @@ class Manipulation:
             std = torch.std(self.signals, dim=-1, keepdim=True)
             return (self.signals - mean) / std
 
+    def trim_mask(self):
+        """
+        Remove mask from signals
+        :return: signals without mask
+        """
+        return self.signals[:, :torch.max(torch.sum(self.signals > 0, dim=-1))]
+
+    def remove_negative(self):
+        pass
+
 
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
     import pandas as pd
 
     # Cleansing - Detrend
-    test_sig = torch.tensor(pd.read_csv('../MIMIC_Clinical_Database/III/result/pleth.csv').to_numpy()[:, 1:][:2,0:1000])
+    test_sig = torch.tensor(
+        pd.read_csv('../MIMIC_Clinical_Database/III/result/pleth.csv').to_numpy()[:, 1:][:2, 0:1000])
 
     # test_sig = torch.tensor([[1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
     #                          [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]]).to('cuda')
     c = Cleansing(test_sig).detrend()
     plt.title('1D signal de-trend example')
-    plt.plot(test_sig[0].cpu().numpy(),color='royalblue', label='original')
+    plt.plot(test_sig[0].cpu().numpy(), color='royalblue', label='original')
     plt.plot(c[0].cpu().numpy(), label='detrended', color='orange')
     plt.legend()
     plt.show()
