@@ -3,29 +3,40 @@ import numpy as np
 
 
 class Cleansing:
-    def __init__(self, signals):
+    def __init__(self, signals, cpu=False):
         self.signals = signals
         self.is_tensor = True if type(signals) == torch.Tensor else False
         if not self.is_tensor:
-            self.signals = torch.from_numpy(self.signals.copy()).to(torch.float).to('cuda')
+            self.signals = torch.from_numpy(self.signals.copy()).to(torch.float)
         else:
-            self.signals = signals.to(torch.float).to('cuda')
+            self.signals = signals.to(torch.float)
+        if cpu:
+            print('!Currently accessing Cleansing Class with cpu, it might take a long time.')
+            pass
+        else:
+            self.signals = self.signals.to('cuda')
 
     def detrend(self, Lambda=100):
         """
-        *Only available with cuda device*
+        * Only available with cuda device*
         This function applies a detrending filter to the 1D signals with linear trend.
         with diagonal matrix D, using torch batch matrix multiplication
 
         Based on the following article "An advanced detrending method with application
         to HRV analysis". Tarvainen et al., IEEE Trans on Biomedical Engineering, 2002.
 
+        ** It may take 10 GB of GPU memory for signals with 18000 length
+
         :param Lambda: Smoothing parameter
         :return: Detrended signals
         """
+        if not torch.cuda.is_available():
+            raise Exception('Cuda device is not available')
         # if not self.is_tensor:
         #     self.signals = torch.from_numpy(self.signals.copy())
         # signals = self.signals.to(torch.float).to('cuda')
+        if self.signals.dim() == 1:
+            self.signals = self.signals.unsqueeze(0)
         test_n, length = self.signals.shape
 
         H = torch.eye(length).to('cuda')
@@ -40,7 +51,12 @@ class Cleansing:
         detrended_signal = torch.bmm(self.signals.unsqueeze(1),
                                      (H - torch.linalg.inv(H + (Lambda ** 2) * torch.t(D) @ D)).expand(test_n, -1,
                                                                                                        -1)).squeeze()
-        detrended_signal += torch.mean(self.signals, dim=-1, keepdim=True)
+
+        if detrended_signal.dim() == 1:
+            offset = torch.mean(self.signals, dim=-1)
+        else:
+            offset = torch.mean(self.signals, dim=-1, keepdim=True)
+        detrended_signal += offset
         return detrended_signal
 
     def dc_removal(self):
